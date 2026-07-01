@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 Porra Mundial 2026 — Clasificación en vivo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap');
+  :root{
+    --bg:#0b0e13; --bg2:#12151c; --card:#171b22; --card2:#1e232c;
+    --txt:#ffffff; --muted:#9aa0a8; --line:#2a2f38;
+    --gold:#ffcc33; --silver:#cfd6e6; --bronze:#e0985a;
+    --green:#22c55e; --red:#ff5a5f; --blue:#3b82f6; --accent:#d50a0a;
+    --head:'Oswald','Arial Narrow','Roboto Condensed',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(180deg,#12151c 0%,var(--bg) 42%);
+    color:var(--txt);min-height:100vh;padding-bottom:60px}
+  header{padding:22px 20px 14px;text-align:center;border-top:4px solid var(--accent);
+    background:linear-gradient(180deg,rgba(213,10,10,.12),transparent)}
+  h1{margin:0;font-family:var(--head);font-weight:700;font-size:30px;letter-spacing:1px;text-transform:uppercase}
+  .sub{color:var(--muted);font-size:12px;margin-top:6px;text-transform:uppercase;letter-spacing:1px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:16px 0 10px}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:4px;padding:10px 16px;
+    font-family:var(--head);font-size:14px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+    cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{filter:brightness(1.12)}
+  .btn.alt{background:var(--card2);border:1px solid var(--line)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .src{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .dot.live{background:var(--green);box-shadow:0 0 10px var(--green)}
+  .dot.off{background:var(--blue)}
+  input.search{background:var(--card);border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:10px 14px;font-size:14px;width:230px;max-width:60vw}
+  .podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;margin:18px 0 8px;align-items:end}
+  .pod{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:8px;padding:16px 12px;text-align:center;position:relative;overflow:hidden}
+  .pod .pos{font-family:var(--head);font-size:30px;font-weight:700}
+  .pod .nm{font-family:var(--head);font-weight:600;margin:4px 0;font-size:17px;text-transform:uppercase;letter-spacing:.5px}
+  .pod .pt{font-family:var(--head);font-size:26px;font-weight:700}
+  .pod small{color:var(--muted)}
+  .pod.p1{border-color:var(--gold);box-shadow:0 0 24px rgba(255,206,77,.18)}
+  .pod.p1 .pos{color:var(--gold)} .pod.p2 .pos{color:var(--silver)} .pod.p3 .pos{color:var(--bronze)}
+  .pod .medal{font-size:22px}
+  table{width:100%;border-collapse:collapse;margin-top:14px;background:var(--card);border-radius:6px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;font-size:14px;border-bottom:1px solid var(--line)}
+  th{background:#0e1116;color:var(--muted);font-family:var(--head);font-weight:600;font-size:12px;
+    text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--accent)}
+  th.num,td.num{text-align:center}
+  tr.row{transition:background .2s}
+  tr.row:hover{background:var(--card2)}
+  tr.me{background:rgba(213,10,10,.14)}
+  tr.me:hover{background:rgba(213,10,10,.22)}
+  tr.last td{color:var(--red)}
+  .rk{font-family:var(--head);font-weight:700;font-size:17px;width:30px;text-align:center}
+  .pname{font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tag{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff;font-weight:700}
+  .tag.gold{background:var(--gold);color:#3a2c00}
+  .tag.sil{background:var(--silver);color:#23283a}
+  .tag.red{background:var(--red)}
+  .tot{font-family:var(--head);font-weight:700;font-size:19px;text-align:center}
+  .mv{font-size:12px;margin-left:6px}
+  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+  .teams{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:11px;padding:3px 8px;border-radius:8px;background:var(--bg2);
+    border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .chip b{color:var(--txt)} .chip .pp{font-weight:700}
+  .chip .pos{color:var(--green)} .chip .neg{color:var(--red)}
+  .chip.elim{background:rgba(255,107,129,.13);border-color:var(--red);text-decoration:line-through}
+  .chip.elim b{color:var(--red)} .chip.elim .pp{color:var(--red)!important}
+  .chip .x{color:var(--red);text-decoration:none;font-size:10px;margin-left:2px}
+  .tic{display:flex;align-items:center;gap:7px}
+  .ti label{display:flex;align-items:center;gap:2px;font-size:11px;cursor:pointer}
+  .teamsrow td{background:rgba(255,255,255,.015);padding-top:4px;padding-bottom:10px;border-bottom:2px solid var(--bg2)}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin:14px auto;max-width:780px;line-height:1.5}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:14px 0}
+  .panel h3{margin:0 0 8px;font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+  .ti{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);
+    border:1px solid var(--line);border-radius:9px;padding:6px 9px;font-size:13px}
+  .ti input[type=number]{width:46px;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    border-radius:6px;text-align:center;font-size:13px;padding:3px}
+  .toggle{cursor:pointer;color:var(--blue);font-size:13px;text-align:center;margin-top:8px}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px;line-height:1.6}
+  @media(max-width:640px){ .podium{grid-template-columns:1fr;} td,th{padding:9px 7px;font-size:13px} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏆 Porra Bolilla Mundial 2026</h1>
+  <div class="sub">Clasificación interactiva · se calcula al vuelo con los resultados del Mundial</div>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <button class="btn" id="liveBtn">⟳ Calcular con resultados en vivo</button>
+    <button class="btn alt" id="adminBtn">📋 Datos oficiales (admin)</button>
+    <input class="search" id="search" placeholder="Buscar jugador…">
+    <span class="src"><span class="dot off" id="dot"></span><span id="srcTxt">Fuente: clasificación admin · 30‑jun</span></span>
+  </div>
+
+  <div class="podium" id="podium"></div>
+
+  <table id="tbl">
+    <thead>
+      <tr><th class="num">#</th><th>Jugador</th><th class="num">Puntos ▼</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div class="toggle" id="editToggle">⚙︎ Editar puntos por equipo / marcar eliminados</div>
+  <div class="panel" id="editPanel" style="display:none">
+    <h3>Puntos por selección · edita y la clasificación se recalcula al instante (❌ = eliminado)</h3>
+    <div class="grid" id="teamGrid"></div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn alt" id="resetBtn">↺ Restaurar datos admin</button>
+    </div>
+  </div>
+
+  <div class="note" id="engineNote"></div>
+
+  <footer>
+    <b>Reglamento:</b> victoria +3 · empate +1 · derrota −1 · +1 por gol a favor · −1 por gol en contra (solo 90′).
+    Bonos de fase: clasificar de grupos +3, y +1 por cada ronda superada (dieciseisavos, octavos, cuartos, semis, final/3º).
+    <br><span style="opacity:.7">Resultados en vivo: ESPN API + TheSportsDB (FIFA World Cup 2026). El motor coge la fuente
+    más completa y recalcula con el reglamento; si la fuente va por detrás del admin, no la aplica para no mostrar datos erróneos.</span>
+  </footer>
+</div>
+
+<script>
+/* ===================== DATOS ===================== */
+const PRICE = {
+ "España":25,"Francia":25,"Argentina":25,"Inglaterra":23,"Portugal":22,"Brasil":20,
+ "Alemania":20,"Países Bajos":18,"Marruecos":17,"Bélgica":16,"Croacia":14,"Colombia":13,
+ "Senegal":12,"México":11,"Estados Unidos":11,"Uruguay":10,"Japón":10,"Suiza":9,"Irán":9,
+ "Turquía":9,"Ecuador":8,"Austria":8,"Sudáfrica":8,"Corea del Sur":8,"Australia":8,"Argelia":8,
+ "Egipto":7,"Canadá":6,"Noruega":6,"Arabia Saudita":6,"Panamá":5,"Costa de Marfil":5,"Suecia":5,
+ "Ghana":5,"Paraguay":4,"República Checa":4,"Escocia":3,"Túnez":3,"RD del Congo":3,"Uzbekistán":3,
+ "Irak":2,"Jordania":2,"Cabo Verde":2,"Catar":1,"Haití":1,"Curazao":1,"Nueva Zelanda":1,
+ "Bosnia y Herzegovina":1
+};
+const ADMIN = {
+ "España":15,"México":18,"Japón":10,"Canadá":16,"Costa de Marfil":10,"Escocia":-2,
+ "Alemania":15,"Bélgica":12,"Estados Unidos":12,"Suecia":6,"Bosnia y Herzegovina":5,
+ "Inglaterra":14,"Suiza":14,"Turquía":-1,"Egipto":10,"Colombia":13,"Portugal":13,
+ "Países Bajos":17,"República Checa":-5,"Paraguay":6,"Noruega":9,"Marruecos":15,
+ "Nueva Zelanda":-7,"Uruguay":0,"Austria":6,"Brasil":21,"Francia":20,"Ghana":6,
+ "Senegal":6,"Ecuador":6,"Jordania":-8,"Túnez":-13,"Arabia Saudita":-3,"Panamá":-7,
+ "Catar":-9,"Curazao":-9,"Haití":-9
+};
+const PLAYERS = [
+ ["TINTXU D",["España","México","Japón","Canadá","Costa de Marfil","Escocia"]],
+ ["HUGO",["Alemania","Bélgica","Estados Unidos","Canadá","Suecia","Bosnia y Herzegovina"]],
+ ["M&P",["Inglaterra","México","Suiza","Turquía","Egipto","Bosnia y Herzegovina"]],
+ ["JUAN",["Alemania","Colombia","Japón","Canadá","Turquía","Bosnia y Herzegovina"]],
+ ["IÑIGO L",["Portugal","Países Bajos","Canadá","República Checa","Paraguay","Noruega"]],
+ ["SANTI R",["Países Bajos","Marruecos","Colombia","Japón","Bosnia y Herzegovina","Nueva Zelanda"]],
+ ["JULIAN",["Marruecos","Uruguay","Japón","Austria","Canadá","Paraguay"]],
+ ["ALBERTO",["Brasil","Uruguay","Japón","Austria","Noruega","Suecia"]],
+ ["OSCAR R",["Francia","Marruecos","Ghana","Costa de Marfil","República Checa","Paraguay"]],
+ ["ANGEL L",["España","Brasil","Noruega","Paraguay","República Checa","Bosnia y Herzegovina"]],
+ ["JONAN J",["España","Japón","Suiza","Austria","Noruega","Jordania"]],
+ ["ASIER G",["Portugal","Alemania","Ecuador","Noruega","Escocia","Bosnia y Herzegovina"]],
+ ["IMANOL G",["España","Japón","Turquía","Noruega","Suecia","Ghana"]],
+ ["NAGORE U",["Portugal","Marruecos","México","Canadá","Túnez","Nueva Zelanda"]],
+ ["KARLOS A",["Países Bajos","Marruecos","Uruguay","Canadá","Arabia Saudita","Nueva Zelanda"]],
+ ["ANDREA",["Senegal","Estados Unidos","Uruguay","Turquía","Suiza","Ecuador"]],
+ ["CARLOS",["España","Senegal","México","Ecuador","Túnez","Bosnia y Herzegovina"]],
+ ["IPAR HAIZEA",["España","Japón","Suiza","Turquía","República Checa","Escocia"]],
+ ["GORANE",["Países Bajos","Bélgica","Uruguay","Turquía","Noruega","Nueva Zelanda"]],
+ ["ISIS A",["España","Senegal","Turquía","Canadá","Panamá","Túnez"]],
+ ["OSCAR F",["España","Portugal","Uruguay","Catar","Curazao","Haití"]]
+];
+const ME = "";  // sin resaltado de fila propia
+
+// Eliminados a día de hoy (1‑jul), según resultados reales:
+// fuera en fase de grupos + perdedores de los dieciseisavos ya jugados (28‑30 jun).
+// Países Bajos, Alemania, Japón, Costa de Marfil y Suecia cayeron en dieciseisavos.
+const DEFAULT_ELIM = [
+ "Escocia","Haití","República Checa","Turquía","Uruguay","Arabia Saudita",
+ "Nueva Zelanda","Jordania","Túnez","Panamá","Catar","Curazao",
+ "Alemania","Japón","Países Bajos","Costa de Marfil","Suecia"
+];
+
+const GROUPS = {
+ A:["México","Sudáfrica","Corea del Sur","República Checa"],
+ B:["Canadá","Bosnia y Herzegovina","Catar","Suiza"],
+ C:["Brasil","Marruecos","Haití","Escocia"],
+ D:["Estados Unidos","Paraguay","Australia","Turquía"],
+ E:["Alemania","Curazao","Costa de Marfil","Ecuador"],
+ F:["Países Bajos","Japón","Suecia","Túnez"],
+ G:["Bélgica","Egipto","Irán","Nueva Zelanda"],
+ H:["España","Cabo Verde","Arabia Saudita","Uruguay"],
+ I:["Francia","Senegal","Irak","Noruega"],
+ J:["Argentina","Argelia","Austria","Jordania"],
+ K:["Portugal","RD del Congo","Uzbekistán","Colombia"],
+ L:["Inglaterra","Croacia","Ghana","Panamá"]
+};
+const TEAM2GROUP={}; for(const g in GROUPS) GROUPS[g].forEach(t=>TEAM2GROUP[t]=g);
+
+// nombre API (inglés) -> nombre porra
+const NMAP = {
+ "spain":"España","france":"Francia","argentina":"Argentina","england":"Inglaterra",
+ "portugal":"Portugal","brazil":"Brasil","germany":"Alemania","netherlands":"Países Bajos",
+ "morocco":"Marruecos","belgium":"Bélgica","croatia":"Croacia","colombia":"Colombia",
+ "senegal":"Senegal","mexico":"México","usa":"Estados Unidos","unitedstates":"Estados Unidos",
+ "uruguay":"Uruguay","japan":"Japón","switzerland":"Suiza","iran":"Irán","iriran":"Irán",
+ "turkey":"Turquía","turkiye":"Turquía","ecuador":"Ecuador","austria":"Austria",
+ "southafrica":"Sudáfrica","southkorea":"Corea del Sur","korearepublic":"Corea del Sur",
+ "australia":"Australia","algeria":"Argelia","egypt":"Egipto","canada":"Canadá","norway":"Noruega",
+ "saudiarabia":"Arabia Saudita","panama":"Panamá","ivorycoast":"Costa de Marfil",
+ "cotedivoire":"Costa de Marfil","sweden":"Suecia","ghana":"Ghana","paraguay":"Paraguay",
+ "czechrepublic":"República Checa","czechia":"República Checa","scotland":"Escocia",
+ "tunisia":"Túnez","drcongo":"RD del Congo","congodr":"RD del Congo","democraticrepublicofthecongo":"RD del Congo",
+ "uzbekistan":"Uzbekistán","iraq":"Irak","jordan":"Jordania","capeverde":"Cabo Verde",
+ "qatar":"Catar","haiti":"Haití","curacao":"Curazao","newzealand":"Nueva Zelanda",
+ "bosniaherzegovina":"Bosnia y Herzegovina","bosniaandherzegovina":"Bosnia y Herzegovina"
+};
+function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");}
+// que los propios nombres en español se reconozcan
+Object.keys(PRICE).forEach(t=>{ const k=norm(t); if(!NMAP[k]) NMAP[k]=t; });
+function mapTeam(api){return NMAP[norm(api)]||null;}
+
+/* ===================== ESTADO ===================== */
+let teamPoints = Object.assign({}, ADMIN);
+let baseTotals = {};
+let eliminated = new Set(DEFAULT_ELIM);
+let mode = "admin";
+
+/* ===================== CÁLCULO JUGADORES ===================== */
+const playerTotal = ts => ts.reduce((s,t)=>s+(teamPoints[t]??0),0);
+function ranking(){
+  let arr = PLAYERS.map(([name,teams])=>({name,teams,total:playerTotal(teams),
+    budget:teams.reduce((s,t)=>s+(PRICE[t]??0),0)}));
+  arr.sort((a,b)=> b.total-a.total || a.budget-b.budget || a.name.localeCompare(b.name));
+  arr.forEach((p,i)=>p.rank=i+1);
+  const min = Math.min(...arr.map(p=>p.total));
+  arr.forEach(p=>p.isLast=(p.total===min));
+  return arr;
+}
+
+/* ===================== MOTOR: puntos desde partidos normalizados ===================== */
+// match = {home, away, gh, ga, group:bool, stage:'R32'|'R16'|'QF'|'SF'|'FIN', date}
+function scoreFromMatches(matches){
+  const pts={}; const elim=new Set(); for(const t in PRICE) pts[t]=0;
+  const base=(t,gf,ga)=>{ if(pts[t]!=null) pts[t]+=(gf>ga?3:gf===ga?1:-1)+gf-ga; };
+  const M=matches.map(m=>({h:mapTeam(m.home),a:mapTeam(m.away),gh:+m.gh,ga:+m.ga,group:m.group,stage:m.stage}));
+  const gM=M.filter(m=>m.group), kM=M.filter(m=>!m.group);
+
+  // grupos
+  const tbl={}; for(const g in GROUPS){tbl[g]={}; GROUPS[g].forEach(t=>tbl[g][t]={pt:0,gd:0,gf:0,played:0});}
+  gM.forEach(m=>{
+    if(m.h){ base(m.h,m.gh,m.ga); const g=TEAM2GROUP[m.h]; const x=g&&tbl[g][m.h];
+      if(x){x.pt+=m.gh>m.ga?3:m.gh===m.ga?1:0;x.gd+=m.gh-m.ga;x.gf+=m.gh;x.played++;}}
+    if(m.a){ base(m.a,m.ga,m.gh); const g=TEAM2GROUP[m.a]; const x=g&&tbl[g][m.a];
+      if(x){x.pt+=m.ga>m.gh?3:m.ga===m.gh?1:0;x.gd+=m.ga-m.gh;x.gf+=m.ga;x.played++;}}
+  });
+  const qualified=new Set(); const thirds=[]; const groupsDone=[];
+  for(const g in GROUPS){
+    if(!GROUPS[g].every(t=>tbl[g][t].played>=3)) continue;
+    groupsDone.push(g);
+    const rk=[...GROUPS[g]].sort((x,y)=> tbl[g][y].pt-tbl[g][x].pt || tbl[g][y].gd-tbl[g][x].gd || tbl[g][y].gf-tbl[g][x].gf);
+    qualified.add(rk[0]); qualified.add(rk[1]);
+    thirds.push({t:rk[2],...tbl[g][rk[2]]});
+    elim.add(rk[3]);
+  }
+  thirds.sort((a,b)=> b.pt-a.pt || b.gd-a.gd || b.gf-a.gf);
+  const tq=new Set(thirds.slice(0,8).map(o=>o.t)); tq.forEach(t=>qualified.add(t));
+  thirds.forEach(o=>{ if(!tq.has(o.t)) elim.add(o.t); });
+  qualified.forEach(t=>{ if(pts[t]!=null) pts[t]+=3; });
+
+  // eliminatorias: puntos a 90' (empate si está empatado a 90, aunque luego haya penaltis);
+  // el +1 por superar la ronda lo recibe quien AVANZA de verdad (penaltis incluidos).
+  const stages=["R32","R16","QF","SF","FIN"];
+  const part={}; stages.forEach(s=>part[s]=new Set());
+  kM.forEach(m=>{ if(m.h)part[m.stage].add(m.h); if(m.a)part[m.stage].add(m.a); });
+  const nextOf={R32:"R16",R16:"QF",QF:"SF",SF:"FIN"};
+  const advTeam=m=>{
+    if(m.adv){ const t=mapTeam(m.adv); if(t) return t; }            // dato de la fuente (incluye penaltis)
+    if(m.gh>m.ga) return m.h; if(m.ga>m.gh) return m.a;             // decidido en los 90'
+    const nx=nextOf[m.stage];                                       // empate a 90' -> quién aparece en la ronda siguiente
+    if(nx){ if(m.h&&part[nx].has(m.h)) return m.h; if(m.a&&part[nx].has(m.a)) return m.a; }
+    return null;
+  };
+  const reached={R16:new Set(),QF:new Set(),SF:new Set(),FIN:new Set()};
+  kM.forEach(m=>{
+    if(m.h) base(m.h,m.gh,m.ga);          // puntos de partido a 90'
+    if(m.a) base(m.a,m.ga,m.gh);
+    const a=advTeam(m), nx=nextOf[m.stage];
+    if(m.stage==="SF"){ if(m.h)reached.FIN.add(m.h); if(m.a)reached.FIN.add(m.a); } // ambos llegan a final/3º
+    else if(a&&nx){ reached[nx].add(a); }
+    if(m.stage!=="FIN" && a){ const l=(a===m.h)?m.a:(a===m.a?m.h:null); if(l&&pts[l]!=null) elim.add(l); }
+  });
+  ["R16","QF","SF","FIN"].forEach(s=>{ part[s].forEach(t=>reached[s].add(t)); }); // estar en la ronda = haberla alcanzado
+  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null) pts[t]+=1; }); }); // +1 por ronda superada
+  return {pts, elim, meta:{groupsDone:groupsDone.length, finished:M.length, ko:kM.length}};
+}
+
+/* ===================== NORMALIZADORES DE FUENTES ===================== */
+function stageFromSlug(s){
+  s=(s||"").toLowerCase();                 // ESPN: e.season.slug -> "round-of-32", "round-of-16", ...
+  if(s.includes("32")) return "R32";
+  if(s.includes("16")) return "R16";
+  if(s.includes("quarter")) return "QF";
+  if(s.includes("semi")) return "SF";
+  if(s.includes("third")||s.includes("3rd")||s.includes("final")) return "FIN";
+  return null;                             // grupos (slug tipo "group-stage")
+}
+function normalizeESPN(data){
+  const out=[];
+  (data.events||[]).forEach(e=>{
+    const c=(e.competitions||[])[0]; if(!c) return;
+    if(!(c.status&&c.status.type&&c.status.type.completed)) return;
+    const cs=c.competitors||[];
+    const H=cs.find(x=>x.homeAway==="home"), A=cs.find(x=>x.homeAway==="away");
+    if(!H||!A) return;
+    const gh=parseInt(H.score), ga=parseInt(A.score);
+    if(isNaN(gh)||isNaN(ga)) return;
+    const stage=stageFromSlug((e.season&&e.season.slug)||"");  // ronda por season.slug, NO por el nombre
+    const group=!stage;                                        // si no es KO reconocido => fase de grupos
+    const wc=cs.find(x=>x.winner===true);              // quién avanzó (penaltis incluidos)
+    const adv=wc?wc.team.displayName:null;
+    out.push({home:H.team.displayName, away:A.team.displayName, gh, ga, group, stage, adv, date:(e.date||"").slice(0,10)});
+  });
+  return out;
+}
+function normalizeTSDB(data){
+  const evs=(data.events||[]).filter(e=> (e.strStatus||"").toUpperCase()==="FT" && e.intHomeScore!=null && e.intHomeScore!=="");
+  const out=[]; const ko=[];
+  evs.forEach(e=>{
+    const grp=["1","2","3"].includes(String(e.intRound));
+    const o={home:e.strHomeTeam, away:e.strAwayTeam, gh:+e.intHomeScore, ga:+e.intAwayScore,
+             group:grp, stage:null, date:(e.dateEvent||"")};
+    if(grp) out.push(o); else ko.push(o);
+  });
+  // asignar fase a eliminatorias por orden de fecha (16/8/4/2/2)
+  ko.sort((a,b)=> (a.date||"").localeCompare(b.date||""));
+  const sizes=[["R32",16],["R16",8],["QF",4],["SF",2],["FIN",2]]; let i=0;
+  sizes.forEach(([st,n])=>{ ko.slice(i,i+n).forEach(o=>o.stage=st); i+=n; });
+  return out.concat(ko);
+}
+
+/* ===================== RENDER ===================== */
+function chip(t){
+  const v=teamPoints[t]??0; const cls=v>0?"pos":(v<0?"neg":""); const out=eliminated.has(t);
+  return `<span class="chip${out?' elim':''}"><b>${t}</b> <span class="pp ${cls}">${v>0?"+":""}${v}</span>${out?' <span class="x">❌</span>':''}</span>`;
+}
+function movement(p){
+  if(mode!=="live") return "";
+  const prev=baseTotals[p.name]; if(prev===undefined) return "";
+  const d=p.total-prev;
+  if(d>0) return `<span class="mv up">▲${d}</span>`;
+  if(d<0) return `<span class="mv down">▼${-d}</span>`;
+  return `<span class="mv flat">=</span>`;
+}
+function render(){
+  const arr=ranking();
+  const q=(document.getElementById('search').value||"").toLowerCase();
+  const top=arr.slice(0,3), order=[top[1],top[0],top[2]];
+  const meta={0:{c:"p2",m:"🥈",t:"2º"},1:{c:"p1",m:"🥇",t:"1º"},2:{c:"p3",m:"🥉",t:"3º"}};
+  document.getElementById('podium').innerHTML = order.map((p,i)=> p?`
+    <div class="pod ${meta[i].c}"><div class="medal">${meta[i].m}</div><div class="pos">${meta[i].t}</div>
+      <div class="nm">${p.name}${p.name===ME?' <span class="tag">TÚ</span>':''}</div>
+      <div class="pt">${p.total}</div><small>puntos</small></div>`:`<div class="pod"></div>`).join('');
+  document.getElementById('tbody').innerHTML = arr.map(p=>{
+    if(q && !p.name.toLowerCase().includes(q)) return "";
+    let tags="";
+    if(p.rank===1) tags=' <span class="tag gold">1º</span>';
+    else if(p.rank===2) tags=' <span class="tag sil">2º</span>';
+    if(p.isLast) tags+=' <span class="tag red">🚩 farolillo</span>';
+    const cls="row"+(p.name===ME?" me":"")+(p.isLast?" last":"");
+    const trcls="teamsrow"+(p.name===ME?" me":"");
+    return `<tr class="${cls}">
+      <td class="rk">${p.rank}</td>
+      <td><div class="pname">${p.name}${p.name===ME?' <span class="tag">TÚ</span>':''}${tags}</div></td>
+      <td class="tot">${p.total}${movement(p)}</td></tr>
+      <tr class="${trcls}"><td></td><td colspan="2"><div class="teams">${p.teams.map(chip).join('')}</div></td></tr>`;
+  }).join('');
+}
+
+/* ===================== PANEL EDICIÓN ===================== */
+function buildGrid(){
+  const used=new Set(); PLAYERS.forEach(([,ts])=>ts.forEach(t=>used.add(t)));
+  const list=[...used].sort((a,b)=> (teamPoints[b]??0)-(teamPoints[a]??0));
+  document.getElementById('teamGrid').innerHTML = list.map(t=>`
+    <div class="ti"><span>${t}</span><span class="tic">
+      <label title="Marcar como eliminado"><input type="checkbox" data-elim="${t}" ${eliminated.has(t)?'checked':''}>❌</label>
+      <input type="number" data-t="${t}" value="${teamPoints[t]??0}"></span></div>`).join('');
+  document.querySelectorAll('#teamGrid input[data-t]').forEach(inp=>{
+    inp.oninput=()=>{ teamPoints[inp.dataset.t]=parseFloat(inp.value)||0; render(); };
+  });
+  document.querySelectorAll('#teamGrid input[data-elim]').forEach(cb=>{
+    cb.onchange=()=>{ cb.checked?eliminated.add(cb.dataset.elim):eliminated.delete(cb.dataset.elim); render(); };
+  });
+}
+
+/* ===================== FUENTES EN VIVO ===================== */
+async function fetchJSON(url){ const r=await fetch(url,{cache:"no-store"}); return await r.json(); }
+async function getESPN(){
+  const ranges=["20260611-20260620","20260621-20260630","20260701-20260710","20260711-20260720"];
+  const seen={}; let all=[];
+  for(const rg of ranges){
+    try{ const j=await fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates="+rg);
+      (j.events||[]).forEach(e=>{ if(!seen[e.id]){seen[e.id]=1; all.push(e);} });
+    }catch(_){}
+  }
+  return normalizeESPN({events:all});
+}
+async function getTSDB(){
+  const j=await fetchJSON("https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4429&s=2026");
+  return normalizeTSDB(j);
+}
+function lastDate(ms){ return ms.map(m=>m.date).filter(Boolean).sort().pop()||"?"; }
+
+async function goLive(){
+  const btn=document.getElementById('liveBtn');
+  btn.disabled=true; btn.textContent="⟳ Calculando…";
+  try{
+    let espn=[], tsdb=[];
+    try{ espn=await getESPN(); }catch(_){}
+    try{ tsdb=await getTSDB(); }catch(_){}
+    const ra=scoreFromMatches(espn), rb=scoreFromMatches(tsdb);
+    // elige la fuente más completa
+    let matches, res, srcName;
+    if(rb.meta.finished > ra.meta.finished){ matches=tsdb; res=rb; srcName="TheSportsDB"; }
+    else { matches=espn; res=ra; srcName="ESPN"; }
+    if(!matches.length) throw new Error("ninguna fuente devolvió partidos finalizados");
+    const last=lastDate(matches);
+
+    if(res.meta.groupsDone < 12 || res.meta.ko === 0){
+      document.getElementById('dot').className="dot off";
+      document.getElementById('srcTxt').textContent="Fuente: admin · las APIs van por detrás";
+      document.getElementById('engineNote').innerHTML=
+        "⚠️ Busqué en <b>ESPN</b> y <b>TheSportsDB</b>. La más completa ("+srcName+") tiene <b>"+res.meta.finished+
+        " partidos</b> finalizados (último: "+last+"), <b>"+res.meta.groupsDone+"/12 grupos</b> cerrados y <b>"+
+        res.meta.ko+" partidos de eliminatorias</b> — va por detrás de la clasificación del admin (30‑jun, ya con "+
+        "dieciseisavos). Para no degradar tus datos ni \"resucitar\" eliminados, <b>mantengo los del admin</b>. "+
+        "Este botón recalculará solo cuando una fuente alcance los dieciseisavos. Mientras, edita a mano abajo.";
+      btn.disabled=false; btn.textContent="⟳ Calcular con resultados en vivo";
+      mode="admin"; render();
+      return;
+    }
+    baseTotals={}; PLAYERS.forEach(([n,ts])=> baseTotals[n]=playerTotal(ts));
+    // una vez eliminado, siempre eliminado: unimos los ya confirmados
+    teamPoints=res.pts; eliminated=new Set([...res.elim, ...DEFAULT_ELIM]); mode="live";
+    document.getElementById('dot').className="dot live";
+    document.getElementById('srcTxt').textContent="Fuente: "+srcName+" · en vivo · últ. "+last;
+    document.getElementById('engineNote').innerHTML=
+      "✅ Clasificación calculada al vuelo desde "+srcName+" ("+res.meta.finished+" partidos). "+
+      "Eliminados en <span style='color:var(--red);text-decoration:line-through'>rojo</span>. "+
+      "▲▼ = cambio respecto al admin. Revisa eliminatorias por si algún marcador incluye prórroga.";
+    buildGrid(); render();
+  }catch(err){
+    document.getElementById('dot').className="dot off";
+    document.getElementById('engineNote').innerHTML=
+      "⚠️ No se pudo calcular en vivo ("+err.message+"). Se mantienen los datos del admin; puedes editarlos a mano.";
+  }
+  btn.disabled=false; btn.textContent="⟳ Calcular con resultados en vivo";
+}
+function goAdmin(){
+  teamPoints=Object.assign({},ADMIN); mode="admin"; baseTotals={}; eliminated=new Set(DEFAULT_ELIM);
+  document.getElementById('srcTxt').textContent="Fuente: clasificación admin · 30‑jun";
+  document.getElementById('dot').className="dot off";
+  document.getElementById('engineNote').innerHTML="";
+  buildGrid(); render();
+}
+
+/* ===================== EVENTOS ===================== */
+document.getElementById('liveBtn').onclick=goLive;
+document.getElementById('adminBtn').onclick=goAdmin;
+document.getElementById('resetBtn').onclick=goAdmin;
+document.getElementById('search').oninput=render;
+document.getElementById('editToggle').onclick=()=>{
+  const p=document.getElementById('editPanel');
+  p.style.display = p.style.display==="none"?"block":"none";
+};
+buildGrid(); render();
+// Al cargar, calcula directamente con los datos en vivo (la vista admin queda solo de reserva)
+document.getElementById('engineNote').innerHTML="⏳ Cargando resultados en vivo de las fuentes…";
+goLive();
+</script>
+</body>
+</html>
