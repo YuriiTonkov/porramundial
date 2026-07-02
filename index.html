@@ -232,7 +232,7 @@ const STAGE_NAME={R32:"16avos",R16:"Octavos",QF:"Cuartos",SF:"Semis",FIN:"Final/
 function scoreFromMatches(matches){
   const pts={}; const elim=new Set(); const detail={}; for(const t in PRICE){pts[t]=0;detail[t]=[];}
   const base=(t,gf,ga,lbl)=>{ if(pts[t]!=null){ const d=(gf>ga?3:gf===ga?1:-1)+gf-ga; pts[t]+=d; detail[t].push({lbl,d}); } };
-  const M=matches.map(m=>({h:mapTeam(m.home),a:mapTeam(m.away),gh:+m.gh,ga:+m.ga,group:m.group,stage:m.stage}));
+  const M=matches.map(m=>({h:mapTeam(m.home),a:mapTeam(m.away),gh:+m.gh,ga:+m.ga,group:m.group,stage:m.stage,adv:m.adv,ot:!!m.ot}));
   const gM=M.filter(m=>m.group), kM=M.filter(m=>!m.group);
 
   // grupos
@@ -271,10 +271,16 @@ function scoreFromMatches(matches){
     return null;
   };
   const reached={R16:new Set(),QF:new Set(),SF:new Set(),FIN:new Set()};
+  const draw=(t,rival,sn,marc)=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:`${sn} vs ${rival} (empate a 90', ${marc} tras prórroga/penaltis)`,d:1}); } };
   kM.forEach(m=>{
     const sn=STAGE_NAME[m.stage]||m.stage;
-    if(m.h) base(m.h,m.gh,m.ga,`${sn} vs ${m.a||"?"} (${m.gh}-${m.ga})`);  // puntos de partido a 90'
-    if(m.a) base(m.a,m.ga,m.gh,`${sn} vs ${m.h||"?"} (${m.ga}-${m.gh})`);
+    if(m.ot){                               // resuelto en prórroga/penaltis => a 90' fue empate: +1 a ambos, sin dif. de goles
+      if(m.h) draw(m.h,m.a||"?",sn,`${m.gh}-${m.ga}`);
+      if(m.a) draw(m.a,m.h||"?",sn,`${m.ga}-${m.gh}`);
+    }else{
+      if(m.h) base(m.h,m.gh,m.ga,`${sn} vs ${m.a||"?"} (${m.gh}-${m.ga})`);  // puntos de partido a 90'
+      if(m.a) base(m.a,m.ga,m.gh,`${sn} vs ${m.h||"?"} (${m.ga}-${m.gh})`);
+    }
     const a=advTeam(m), nx=nextOf[m.stage];
     if(m.stage==="SF"){ if(m.h)reached.FIN.add(m.h); if(m.a)reached.FIN.add(m.a); } // ambos llegan a final/3º
     else if(a&&nx){ reached[nx].add(a); }
@@ -309,7 +315,9 @@ function normalizeESPN(data){
     const group=!stage;                                        // si no es KO reconocido => fase de grupos
     const wc=cs.find(x=>x.winner===true);              // quién avanzó (penaltis incluidos)
     const adv=wc?wc.team.displayName:null;
-    out.push({home:H.team.displayName, away:A.team.displayName, gh, ga, group, stage, adv, date:(e.date||"").slice(0,10)});
+    const st=(c.status&&c.status.type)||{};            // "FT" | "AET" | "FT-Pens" ...
+    const ot=/aet|pen|extra|shootout/i.test((st.detail||"")+" "+(st.description||"")+" "+(st.name||""));
+    out.push({home:H.team.displayName, away:A.team.displayName, gh, ga, group, stage, adv, ot, date:(e.date||"").slice(0,10)});
   });
   return out;
 }
@@ -436,7 +444,7 @@ function renderAudit(){
   }
   // 1) Partidos evaluados, ordenados por fecha y fase
   const ms=auditMatches.map(m=>({
-    date:m.date||"", stage:m.group?"GRP":(m.stage||"?"),
+    date:m.date||"", stage:m.group?"GRP":(m.stage||"?"), ot:!!m.ot,
     home:mapTeam(m.home)||m.home, away:mapTeam(m.away)||m.away,
     gh:+m.gh, ga:+m.ga, adv:m.adv?(mapTeam(m.adv)||m.adv):null
   })).sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (STAGE_ORD[a.stage]??9)-(STAGE_ORD[b.stage]??9));
@@ -445,12 +453,14 @@ function renderAudit(){
   const rowsM=ms.map(m=>{
     const koCls=m.stage==="GRP"?"":" ko";
     const lbl=m.stage==="GRP"?"Grupos":(STAGE_NAME[m.stage]||m.stage);
-    const win=m.gh>m.ga?"home":(m.ga>m.gh?"away":"draw");
+    const win=m.ot?"draw":(m.gh>m.ga?"home":(m.ga>m.gh?"away":"draw"));
+    const ph=m.ot?1:mpts(m.gh,m.ga), pa=m.ot?1:mpts(m.ga,m.gh);   // en prórroga/penaltis: empate a 90' (+1 a ambos)
+    const otMark=m.ot?' <span class="stg" title="Resuelto en prórroga o penaltis">pr/pen</span>':'';
     return `<tr><td class="num">${m.date||"—"}</td>
       <td><span class="stg${koCls}">${lbl}</span></td>
-      <td style="text-align:right${win==="home"?";font-weight:700":""}">${m.home}${mpTag(mpts(m.gh,m.ga))}</td>
-      <td class="num res">${m.gh}-${m.ga}</td>
-      <td style="${win==="away"?"font-weight:700":""}">${mpTag(mpts(m.ga,m.gh))}${m.away}</td>
+      <td style="text-align:right${win==="home"?";font-weight:700":""}">${m.home}${mpTag(ph)}</td>
+      <td class="num res">${m.gh}-${m.ga}${otMark}</td>
+      <td style="${win==="away"?"font-weight:700":""}">${mpTag(pa)}${m.away}</td>
       <td>${m.stage==="GRP"?"":(m.adv?"✅ "+m.adv:"—")}</td></tr>`;
   }).join('');
 
