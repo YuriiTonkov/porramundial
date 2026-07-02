@@ -57,6 +57,24 @@
   .tcell.elim .tn{color:var(--red);text-decoration:line-through}
   .tcell.elim .tp{color:var(--red)}
   .note{font-size:13px;color:var(--muted);text-align:center;margin:16px auto;max-width:780px;line-height:1.5}
+  .audit{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .audit h2{font-size:17px;font-weight:600;margin:0 0 4px}
+  .audit h3{font-size:14px;font-weight:600;margin:22px 0 8px}
+  .audit .meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .audit table{min-width:0;box-shadow:none;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .audit .atw{overflow-x:auto}
+  .audit td,.audit th{font-size:12px;padding:8px 10px}
+  .stg{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;
+    background:var(--card2);border:1px solid var(--line);color:var(--muted)}
+  .stg.ko{background:rgba(0,113,227,.1);border-color:var(--blue);color:var(--blue)}
+  .res{font-weight:700}
+  .mp{font-weight:700;font-size:11px;margin:0 3px}
+  .mp.pos{color:var(--green)} .mp.neg{color:var(--red)} .mp.zero{color:var(--muted)}
+  .bd{font-size:11px;color:var(--muted);line-height:1.7}
+  .bd .it{display:inline-block;margin-right:10px;white-space:nowrap}
+  .bd .p{font-weight:700} .bd .p.pos{color:var(--green)} .bd .p.neg{color:var(--red)}
+  .btot{font-weight:700;text-align:center;white-space:nowrap}
+  tr.elimrow .tn2{color:var(--red);text-decoration:line-through}
   footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px;line-height:1.6}
   @media(max-width:640px){ td,th{padding:9px 7px;font-size:12px} }
 </style>
@@ -70,6 +88,7 @@
 <div class="wrap">
   <div class="bar">
     <button class="btn" id="liveBtn">⟳ Calcular con resultados en vivo</button>
+    <button class="btn alt" id="auditBtn">🔎 Auditar partidos y puntos</button>
     <input class="search" id="search" placeholder="Buscar jugador…">
     <span class="src"><span class="dot off" id="dot"></span><span id="srcTxt">Fuente: clasificación admin · 30‑jun</span></span>
   </div>
@@ -82,6 +101,8 @@
   </div>
 
   <div class="note" id="engineNote"></div>
+
+  <div class="audit" id="auditPanel" style="display:none"></div>
 
   <footer>
     <b>Reglamento:</b> victoria +3 · empate +1 · derrota −1 · +1 por gol a favor · −1 por gol en contra (solo 90′).
@@ -189,6 +210,9 @@ function mapTeam(api){return NMAP[norm(api)]||null;}
 let teamPoints = Object.assign({}, ADMIN);
 let eliminated = new Set(DEFAULT_ELIM);
 let mode = "admin";
+let auditMatches = [];      // partidos evaluados en el último cálculo en vivo
+let auditDetail = null;     // desglose de puntos por selección
+let auditSrc = "";          // fuente usada
 
 /* ===================== CÁLCULO JUGADORES ===================== */
 const playerTotal = ts => ts.reduce((s,t)=>s+(teamPoints[t]??0),0);
@@ -204,18 +228,19 @@ function ranking(){
 
 /* ===================== MOTOR: puntos desde partidos normalizados ===================== */
 // match = {home, away, gh, ga, group:bool, stage:'R32'|'R16'|'QF'|'SF'|'FIN', date}
+const STAGE_NAME={R32:"16avos",R16:"Octavos",QF:"Cuartos",SF:"Semis",FIN:"Final/3º"};
 function scoreFromMatches(matches){
-  const pts={}; const elim=new Set(); for(const t in PRICE) pts[t]=0;
-  const base=(t,gf,ga)=>{ if(pts[t]!=null) pts[t]+=(gf>ga?3:gf===ga?1:-1)+gf-ga; };
+  const pts={}; const elim=new Set(); const detail={}; for(const t in PRICE){pts[t]=0;detail[t]=[];}
+  const base=(t,gf,ga,lbl)=>{ if(pts[t]!=null){ const d=(gf>ga?3:gf===ga?1:-1)+gf-ga; pts[t]+=d; detail[t].push({lbl,d}); } };
   const M=matches.map(m=>({h:mapTeam(m.home),a:mapTeam(m.away),gh:+m.gh,ga:+m.ga,group:m.group,stage:m.stage}));
   const gM=M.filter(m=>m.group), kM=M.filter(m=>!m.group);
 
   // grupos
   const tbl={}; for(const g in GROUPS){tbl[g]={}; GROUPS[g].forEach(t=>tbl[g][t]={pt:0,gd:0,gf:0,played:0});}
   gM.forEach(m=>{
-    if(m.h){ base(m.h,m.gh,m.ga); const g=TEAM2GROUP[m.h]; const x=g&&tbl[g][m.h];
+    if(m.h){ base(m.h,m.gh,m.ga,`Grupos vs ${m.a||"?"} (${m.gh}-${m.ga})`); const g=TEAM2GROUP[m.h]; const x=g&&tbl[g][m.h];
       if(x){x.pt+=m.gh>m.ga?3:m.gh===m.ga?1:0;x.gd+=m.gh-m.ga;x.gf+=m.gh;x.played++;}}
-    if(m.a){ base(m.a,m.ga,m.gh); const g=TEAM2GROUP[m.a]; const x=g&&tbl[g][m.a];
+    if(m.a){ base(m.a,m.ga,m.gh,`Grupos vs ${m.h||"?"} (${m.ga}-${m.gh})`); const g=TEAM2GROUP[m.a]; const x=g&&tbl[g][m.a];
       if(x){x.pt+=m.ga>m.gh?3:m.ga===m.gh?1:0;x.gd+=m.ga-m.gh;x.gf+=m.ga;x.played++;}}
   });
   const qualified=new Set(); const thirds=[]; const groupsDone=[];
@@ -230,7 +255,7 @@ function scoreFromMatches(matches){
   thirds.sort((a,b)=> b.pt-a.pt || b.gd-a.gd || b.gf-a.gf);
   const tq=new Set(thirds.slice(0,8).map(o=>o.t)); tq.forEach(t=>qualified.add(t));
   thirds.forEach(o=>{ if(!tq.has(o.t)) elim.add(o.t); });
-  qualified.forEach(t=>{ if(pts[t]!=null) pts[t]+=3; });
+  qualified.forEach(t=>{ if(pts[t]!=null){ pts[t]+=3; detail[t].push({lbl:"Clasifica de grupos",d:3}); } });
 
   // eliminatorias: puntos a 90' (empate si está empatado a 90, aunque luego haya penaltis);
   // el +1 por superar la ronda lo recibe quien AVANZA de verdad (penaltis incluidos).
@@ -247,16 +272,17 @@ function scoreFromMatches(matches){
   };
   const reached={R16:new Set(),QF:new Set(),SF:new Set(),FIN:new Set()};
   kM.forEach(m=>{
-    if(m.h) base(m.h,m.gh,m.ga);          // puntos de partido a 90'
-    if(m.a) base(m.a,m.ga,m.gh);
+    const sn=STAGE_NAME[m.stage]||m.stage;
+    if(m.h) base(m.h,m.gh,m.ga,`${sn} vs ${m.a||"?"} (${m.gh}-${m.ga})`);  // puntos de partido a 90'
+    if(m.a) base(m.a,m.ga,m.gh,`${sn} vs ${m.h||"?"} (${m.ga}-${m.gh})`);
     const a=advTeam(m), nx=nextOf[m.stage];
     if(m.stage==="SF"){ if(m.h)reached.FIN.add(m.h); if(m.a)reached.FIN.add(m.a); } // ambos llegan a final/3º
     else if(a&&nx){ reached[nx].add(a); }
     if(m.stage!=="FIN" && a){ const l=(a===m.h)?m.a:(a===m.a?m.h:null); if(l&&pts[l]!=null) elim.add(l); }
   });
   ["R16","QF","SF","FIN"].forEach(s=>{ part[s].forEach(t=>reached[s].add(t)); }); // estar en la ronda = haberla alcanzado
-  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null) pts[t]+=1; }); }); // +1 por ronda superada
-  return {pts, elim, meta:{groupsDone:groupsDone.length, finished:M.length, ko:kM.length}};
+  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:"Alcanza "+STAGE_NAME[s],d:1}); } }); }); // +1 por ronda superada
+  return {pts, elim, detail, meta:{groupsDone:groupsDone.length, finished:M.length, ko:kM.length}};
 }
 
 /* ===================== NORMALIZADORES DE FUENTES ===================== */
@@ -381,6 +407,8 @@ async function goLive(){
     }
     // una vez eliminado, siempre eliminado: unimos los ya confirmados
     teamPoints=res.pts; eliminated=new Set([...res.elim, ...DEFAULT_ELIM]); mode="live";
+    auditMatches=matches; auditDetail=res.detail; auditSrc=srcName;
+    if(document.getElementById('auditPanel').style.display!=="none") renderAudit();
     document.getElementById('dot').className="dot live";
     document.getElementById('srcTxt').textContent="Fuente: "+srcName+" · en vivo · últ. "+last;
     document.getElementById('engineNote').innerHTML=
@@ -396,8 +424,72 @@ async function goLive(){
   btn.disabled=false; btn.textContent="⟳ Calcular con resultados en vivo";
 }
 
+/* ===================== AUDITORÍA ===================== */
+const STAGE_ORD={GRP:0,R32:1,R16:2,QF:3,SF:4,FIN:5};
+function renderAudit(){
+  const box=document.getElementById('auditPanel');
+  if(mode!=="live" || !auditMatches.length){
+    box.innerHTML='<h2>Auditoría de partidos y puntos</h2>'+
+      '<p class="meta">El histórico solo está disponible tras calcular con resultados en vivo. '+
+      'Pulsa «⟳ Calcular con resultados en vivo» cuando las fuentes tengan datos.</p>';
+    return;
+  }
+  // 1) Partidos evaluados, ordenados por fecha y fase
+  const ms=auditMatches.map(m=>({
+    date:m.date||"", stage:m.group?"GRP":(m.stage||"?"),
+    home:mapTeam(m.home)||m.home, away:mapTeam(m.away)||m.away,
+    gh:+m.gh, ga:+m.ga, adv:m.adv?(mapTeam(m.adv)||m.adv):null
+  })).sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (STAGE_ORD[a.stage]??9)-(STAGE_ORD[b.stage]??9));
+  const mpts=(gf,ga)=>(gf>ga?3:gf===ga?1:-1)+gf-ga;               // puntos de porra a 90' (mismo cálculo que el motor)
+  const mpTag=v=>`<span class="mp ${v>0?'pos':(v<0?'neg':'zero')}">${v>0?'+':''}${v}</span>`;
+  const rowsM=ms.map(m=>{
+    const koCls=m.stage==="GRP"?"":" ko";
+    const lbl=m.stage==="GRP"?"Grupos":(STAGE_NAME[m.stage]||m.stage);
+    const win=m.gh>m.ga?"home":(m.ga>m.gh?"away":"draw");
+    return `<tr><td class="num">${m.date||"—"}</td>
+      <td><span class="stg${koCls}">${lbl}</span></td>
+      <td style="text-align:right${win==="home"?";font-weight:700":""}">${m.home}${mpTag(mpts(m.gh,m.ga))}</td>
+      <td class="num res">${m.gh}-${m.ga}</td>
+      <td style="${win==="away"?"font-weight:700":""}">${mpTag(mpts(m.ga,m.gh))}${m.away}</td>
+      <td>${m.stage==="GRP"?"":(m.adv?"✅ "+m.adv:"—")}</td></tr>`;
+  }).join('');
+
+  // 2) Desglose de puntos por selección (solo las elegidas por jugadores)
+  const used=new Set(); PLAYERS.forEach(([,ts])=>ts.forEach(t=>used.add(t)));
+  const list=[...used].sort((a,b)=> (teamPoints[b]??0)-(teamPoints[a]??0) || a.localeCompare(b));
+  const rowsT=list.map(t=>{
+    const d=auditDetail[t]||[];
+    const items=d.length? d.map(x=>`<span class="it">${x.lbl} <span class="p ${x.d>0?'pos':(x.d<0?'neg':'')}">${x.d>0?'+':''}${x.d}</span></span>`).join('')
+                        : '<span class="it">sin partidos evaluados</span>';
+    return `<tr class="${eliminated.has(t)?'elimrow':''}">
+      <td class="tn2" style="font-weight:600;white-space:nowrap">${t}${eliminated.has(t)?' ❌':''}</td>
+      <td class="btot">${teamPoints[t]??0}</td>
+      <td><div class="bd">${items}</div></td></tr>`;
+  }).join('');
+
+  box.innerHTML=
+    '<h2>Auditoría de partidos y puntos</h2>'+
+    '<p class="meta">Fuente: <b>'+auditSrc+'</b> · '+ms.length+' partidos evaluados. '+
+      'Reglamento: victoria +3 · empate +1 · derrota −1 · +1 gol a favor · −1 gol en contra (90′) · '+
+      'clasificar de grupos +3 · +1 por ronda alcanzada.</p>'+
+    '<h3>Partidos evaluados</h3>'+
+    '<p class="meta">Junto a cada equipo, los puntos de porra que gana en ese partido (a 90′). Los bonos de clasificación y de ronda se suman aparte, en el desglose de abajo.</p>'+
+    '<div class="atw"><table><thead><tr><th class="num">Fecha</th><th>Fase</th>'+
+      '<th style="text-align:right">Local</th><th class="num">Resultado</th><th>Visitante</th><th>Avanza</th></tr></thead>'+
+      '<tbody>'+rowsM+'</tbody></table></div>'+
+    '<h3>Desglose de puntos por selección</h3>'+
+    '<div class="atw"><table><thead><tr><th>Selección</th><th class="num">Puntos</th><th>Cómo se calculan</th></tr></thead>'+
+      '<tbody>'+rowsT+'</tbody></table></div>';
+}
+
 /* ===================== EVENTOS ===================== */
 document.getElementById('liveBtn').onclick=goLive;
+document.getElementById('auditBtn').onclick=()=>{
+  const p=document.getElementById('auditPanel');
+  const show=p.style.display==="none";
+  p.style.display=show?"block":"none";
+  if(show){ renderAudit(); p.scrollIntoView({behavior:"smooth",block:"start"}); }
+};
 document.getElementById('search').oninput=render;
 buildHeader(); render();
 // Al cargar, calcula directamente con los datos en vivo (la vista admin queda solo de reserva)
