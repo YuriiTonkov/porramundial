@@ -106,7 +106,8 @@
 
   <footer>
     <b>Reglamento:</b> victoria +3 · empate +1 · derrota −1 · +1 por gol a favor · −1 por gol en contra (solo 90′).
-    Bonos de fase: clasificar de grupos +3, y +1 por cada ronda superada (dieciseisavos, octavos, cuartos, semis, final/3º).
+    Bonos de fase: clasificar de grupos +3, y +1 por cada ronda superada (dieciseisavos, octavos, cuartos, semis).
+    Perder la semifinal no da bono, aunque se juegue el partido por el 3º puesto.
     <br><span style="opacity:.7">Resultados en vivo: ESPN API + TheSportsDB (FIFA World Cup 2026). El motor coge la fuente
     más completa y recalcula con el reglamento; si la fuente va por detrás del admin, no la aplica para no mostrar datos erróneos.</span>
   </footer>
@@ -282,12 +283,13 @@ function scoreFromMatches(matches){
       if(m.a) base(m.a,m.ga,m.gh,`${sn} vs ${m.h||"?"} (${m.ga}-${m.gh})`);
     }
     const a=advTeam(m), nx=nextOf[m.stage];
-    if(m.stage==="SF"){ if(m.h)reached.FIN.add(m.h); if(m.a)reached.FIN.add(m.a); } // ambos llegan a final/3º
-    else if(a&&nx){ reached[nx].add(a); }
+    if(a&&nx){ reached[nx].add(a); }   // solo quien gana la ronda la supera (en SF, solo los finalistas)
     if(m.stage!=="FIN" && a){ const l=(a===m.h)?m.a:(a===m.a?m.h:null); if(l&&pts[l]!=null) elim.add(l); }
   });
-  ["R16","QF","SF","FIN"].forEach(s=>{ part[s].forEach(t=>reached[s].add(t)); }); // estar en la ronda = haberla alcanzado
-  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:"Alcanza "+STAGE_NAME[s],d:1}); } }); }); // +1 por ronda superada
+  ["R16","QF","SF"].forEach(s=>{ part[s].forEach(t=>reached[s].add(t)); }); // estar en la ronda = haberla alcanzado
+  // FIN queda fuera: el partido por el 3º puesto comparte stage con la final, y jugarlo no es haber superado semis
+  const REACH_NAME={R16:"Octavos",QF:"Cuartos",SF:"Semis",FIN:"la final"};
+  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:"Alcanza "+REACH_NAME[s],d:1}); } }); }); // +1 por ronda superada
   return {pts, elim, detail, meta:{groupsDone:groupsDone.length, finished:M.length, ko:kM.length}};
 }
 
