@@ -106,8 +106,8 @@
 
   <footer>
     <b>Reglamento:</b> victoria +3 · empate +1 · derrota −1 · +1 por gol a favor · −1 por gol en contra (solo 90′).
-    Bonos de fase: clasificar de grupos +3, y +1 por cada ronda superada (dieciseisavos, octavos, cuartos, semis).
-    Perder la semifinal no da bono, aunque se juegue el partido por el 3º puesto.
+    Bonos de fase: clasificar de grupos +3, y +1 por cada fase superada (dieciseisavos, octavos, cuartos, semifinales, y paso a la final o tercer puesto).
+    La última fase la cobran los dos finalistas y el 3º (ganador del partido de consolación); el 4º no.
     <br><span style="opacity:.7">Resultados en vivo: ESPN API + TheSportsDB (FIFA World Cup 2026). El motor coge la fuente
     más completa y recalcula con el reglamento; si la fuente va por detrás del admin, no la aplica para no mostrar datos erróneos.</span>
   </footer>
@@ -287,9 +287,15 @@ function scoreFromMatches(matches){
     if(m.stage!=="FIN" && a){ const l=(a===m.h)?m.a:(a===m.a?m.h:null); if(l&&pts[l]!=null) elim.add(l); }
   });
   ["R16","QF","SF"].forEach(s=>{ part[s].forEach(t=>reached[s].add(t)); }); // estar en la ronda = haberla alcanzado
-  // FIN queda fuera: el partido por el 3º puesto comparte stage con la final, y jugarlo no es haber superado semis
-  const REACH_NAME={R16:"Octavos",QF:"Cuartos",SF:"Semis",FIN:"la final"};
-  ["R16","QF","SF","FIN"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:"Alcanza "+REACH_NAME[s],d:1}); } }); }); // +1 por ronda superada
+  const REACH_NAME={R16:"Octavos",QF:"Cuartos",SF:"Semis"};
+  ["R16","QF","SF"].forEach(s=>{ reached[s].forEach(t=>{ if(pts[t]!=null){ pts[t]+=1; detail[t].push({lbl:"Alcanza "+REACH_NAME[s],d:1}); } }); }); // +1 por fase alcanzada
+  // Última fase (+1): "paso a la final" para los 2 finalistas; "queda 3º" para quien gana el partido de consolación.
+  // El 4º no cobra. La final y el 3er puesto comparten stage FIN: la final es la que juegan los finalistas (reached.FIN).
+  const bonus=(t,lbl)=>{ if(t&&pts[t]!=null){ pts[t]+=1; detail[t].push({lbl,d:1}); } };
+  const finalists=new Set(reached.FIN);
+  finalists.forEach(t=>bonus(t,"Paso a la final"));
+  kM.filter(m=>m.stage==="FIN" && !((m.h&&finalists.has(m.h))||(m.a&&finalists.has(m.a))))
+    .forEach(m=>bonus(advTeam(m),"Queda 3º"));
   return {pts, elim, detail, meta:{groupsDone:groupsDone.length, finished:M.length, ko:kM.length}};
 }
 
